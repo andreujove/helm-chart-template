@@ -1,0 +1,36 @@
+global:
+  registry: docker.io
+  projectPath: mendhak/http-https-echo
+
+app:
+  image:
+    tag: "34"
+    pullPolicy: "Always"
+    livenessPath: "/"
+    readinessPath: "/"
+    startupPath: "/"
+  containerPort: 8080
+  replicas: 1
+  resources:
+    requests:
+      cpu: "800m"
+      memory: "1024Mi"  
+    limits:
+      cpu: "1500m"
+      memory: "1024Mi"
+  strategy:
+    maxSurge: 1
+    maxUnavailable: 0
+  terminationGracePeriodSeconds: 70
+  preStopSleep: 15
+
+service:
+  type: "ClusterIP"
+  port: 80
+
+namespace:
+  name: "test-http-echo"
+
+configMap:
+  ENVIRONMENT: "dev"
+  LOG_LEVEL: "DEBUG"
