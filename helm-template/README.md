@@ -40,28 +40,38 @@ sudo mv linux-amd64/helm /usr/local/bin/helm
 
 1. Start a minikube cluster:
 
-```
+```bash
 minikube start -p test-helm --kubernetes-version=v1.33.0 --cpus=4 --memory=4096
 ```
 
 2. Check the nodes:
-```
+```bash
 kubectl get nodes
 ```
 
 3. Activate profile of minikube:
-```
+```bash
 minikube profile test-helm
 ```
 
 4. To expose Services type LoadBalancer use:
-```
+```bash
 minikube tunnel
 ```
 
+5. Create ns and install the app using the helm & debug:
+```bash
+kubectl create ns test-http-echo
 
+helm upgrade --install test-release . --values ./values.yaml --debug --wait --timeout 1800s --namespace test-http-echo
+
+helm history test-release
+
+kubectl port-forward service/test-release 8080:8080 --namespace test-http-echo
+
+```
 
 7. Delete minikube:
-```
+```bash
 minikube delete -p test-istio
 ```
