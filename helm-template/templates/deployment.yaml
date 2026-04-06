@@ -3,14 +3,16 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}
   labels:
-    app: {{ .Release.Name }}
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Values.app.image.tag | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.app.replicas }}
   {{- end }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ .Release.Name }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -19,12 +21,15 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
+        # --- MATCH THESE TO THE SERVICE SELECTOR ---
+        app.kubernetes.io/name: {{ .Release.Name }}
       annotations:
         # Forces a manual rollout if the configmap changes
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ .Release.Name }}
+      # Security: Best practice to disable API token automount
+      automountServiceAccountToken: false
       containers:
         - name: {{ .Release.Name }}
           image: "{{ .Values.global.registry }}/{{ .Values.global.projectPath }}:{{ .Values.app.image.tag }}"
