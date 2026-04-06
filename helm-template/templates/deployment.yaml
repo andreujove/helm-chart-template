@@ -2,11 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}
-  namespace: {{ .Values.namespace.name }}
   labels:
     app: {{ .Release.Name }}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.app.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}
@@ -44,28 +45,37 @@ spec:
             - name: http
               containerPort: {{ .Values.app.containerPort }}
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: {{ .Values.app.image.livenessPath }}
-              port: http
-            initialDelaySeconds: 10
-            timeoutSeconds: 1
-            periodSeconds: 10
-            failureThreshold: 3
+
           readinessProbe:
             httpGet:
-              path: {{ .Values.app.image.readinessPath }}
+              path: {{ .Values.app.readinessProbe.path }}
               port: http
-            initialDelaySeconds: 5
-            timeoutSeconds: 1
-            periodSeconds: 10
-            failureThreshold: 3
+            initialDelaySeconds: {{ .Values.app.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.app.readinessProbe.timeoutSeconds }}
+            successThreshold: 1
+            failureThreshold: {{ .Values.app.readinessProbe.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.app.livenessProbe.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.app.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.app.livenessProbe.timeoutSeconds }}
+            successThreshold: 1
+            failureThreshold: {{ .Values.app.livenessProbe.failureThreshold }}
+
           startupProbe:
             httpGet:
-              path: {{ .Values.app.image.startupPath }}
+              path: {{ .Values.app.startupProbe.path }}
               port: http
-            failureThreshold: 30
-            periodSeconds: 10
+            initialDelaySeconds: {{ .Values.app.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.app.startupProbe.timeoutSeconds }}
+            successThreshold: 1
+            failureThreshold: {{ .Values.app.startupProbe.failureThreshold }}
+
           resources:
             {{- toYaml .Values.app.resources | nindent 12 }}
           envFrom:
@@ -75,10 +85,12 @@ spec:
             preStop:
               exec:
                 command: ["sh", "-c", "sleep {{ .Values.app.preStopSleep }}"]
-      volumes:
-        - name: config-files-volume
-          configMap:
-            name: "{{ .Release.Name }}-config-files"
-        - name: tmp-volume
-          emptyDir: {}
+      # volumes:
+      #   - name: config-files-volume
+      #     configMap:
+      #       name: "{{ .Release.Name }}-config-files"
+      #   - name: tmp-volume
+      #     emptyDir: {}
+      
+      # Must be > preStopSleep
       terminationGracePeriodSeconds: {{ .Values.app.terminationGracePeriodSeconds }}

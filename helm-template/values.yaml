@@ -7,8 +7,24 @@ app:
     tag: "34"
     pullPolicy: "Always"
     livenessPath: "/"
-    readinessPath: "/"
-    startupPath: "/"
+  readinessProbe: 
+    path: "/"
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 5
+  livenessProbe: 
+    path: "/"
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 5
+  startupProbe: 
+    path: "/"
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 1
+    failureThreshold: 5
   containerPort: 8080
   replicas: 1
   resources:
@@ -21,16 +37,19 @@ app:
   strategy:
     maxSurge: 1
     maxUnavailable: 0
-  terminationGracePeriodSeconds: 70
   preStopSleep: 15
+  terminationGracePeriodSeconds: 70
 
 service:
   type: "ClusterIP"
   port: 80
 
-namespace:
-  name: "test-http-echo"
-
 configMap:
   ENVIRONMENT: "dev"
   LOG_LEVEL: "DEBUG"
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
