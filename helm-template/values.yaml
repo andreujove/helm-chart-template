@@ -29,11 +29,11 @@ app:
   replicas: 1
   resources:
     requests:
-      cpu: "800m"
-      memory: "1024Mi"  
+      cpu: "50m" # REQUIRED: HPA uses this as the 100% baseline
+      memory: "64Mi" # REQUIRED: HPA uses this as the 100% baseline  
     limits:
-      cpu: "1500m"
-      memory: "1024Mi"
+      cpu: "150m"
+      memory: "128Mi"
   strategy:
     maxSurge: 1
     maxUnavailable: 0
@@ -49,7 +49,8 @@ configMap:
   LOG_LEVEL: "DEBUG"
 
 autoscaling:
-  enabled: false
-  minReplicas: 2
+  enabled: true
+  minReplicas: 1
   maxReplicas: 10
   targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
