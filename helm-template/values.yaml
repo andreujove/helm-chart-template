@@ -48,6 +48,11 @@ configMap:
   ENVIRONMENT: "dev"
   LOG_LEVEL: "DEBUG"
 
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: 1  # Use either minAvailable OR maxUnavailable, not both
+
 autoscaling:
   enabled: true
   minReplicas: 1
