@@ -3,6 +3,7 @@ global:
   projectPath: mendhak/http-https-echo
 
 app:
+  revisionHistoryLimit: 5
   image:
     tag: "34"
     pullPolicy: "Always"
