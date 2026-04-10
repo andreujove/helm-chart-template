@@ -1,0 +1,51 @@
+🚀 {{ .Release.Name }} has been deployed successfully!
+
+Namespace: {{ .Release.Namespace }}
+Chart:     {{ .Chart.Name }}-{{ .Chart.Version }}
+App:       {{ .Values.app.image.tag | default .Chart.AppVersion }}
+
+📡 Access your application:
+
+{{- if eq .Values.service.type "ClusterIP" }}
+
+  kubectl port-forward service/{{ .Release.Name }} 8080:{{ .Values.service.port }} --namespace {{ .Release.Namespace }}
+
+  Then open: http://localhost:8080
+
+{{- else if eq .Values.service.type "LoadBalancer" }}
+
+  It may take a few minutes for the LoadBalancer IP to be available.
+  Watch the status with:
+
+  kubectl get service {{ .Release.Name }} --namespace {{ .Release.Namespace }} -w
+
+{{- else if eq .Values.service.type "NodePort" }}
+
+  export NODE_PORT=$(kubectl get service {{ .Release.Name }} --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}")
+  export NODE_IP=$(kubectl get nodes -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo "http://${NODE_IP}:${NODE_PORT}"
+
+{{- end }}
+
+📋 Useful commands:
+
+  kubectl get pods -l app.kubernetes.io/name={{ .Release.Name }} --namespace {{ .Release.Namespace }}
+  kubectl logs -l app.kubernetes.io/name={{ .Release.Name }} --namespace {{ .Release.Namespace }} -f
+  helm status {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+  helm history {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+
+{{- if .Values.autoscaling.enabled }}
+
+📈 HPA is enabled ({{ .Values.autoscaling.minReplicas }}-{{ .Values.autoscaling.maxReplicas }} replicas):
+
+  kubectl get hpa {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+
+{{- end }}
+
+{{- if .Values.podDisruptionBudget.enabled }}
+
+🛡️  PodDisruptionBudget is active:
+
+  kubectl get pdb {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+
+{{- end }}
