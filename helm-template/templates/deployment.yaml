@@ -10,7 +10,7 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.app.replicas }}
   {{- end }}
-  revisionHistoryLimit: {{ .Values.app.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ .Values.app.revisionHistoryLimit | default 3 }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ .Release.Name }}
@@ -87,16 +87,19 @@ spec:
           envFrom:
             - configMapRef:
                 name: "{{ .Release.Name }}-configmap"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           lifecycle:
             preStop:
               exec:
                 command: ["sh", "-c", "sleep {{ .Values.app.preStopSleep }}"]
-      # volumes:
+      volumes:
+        - name: tmp
+          emptyDir: {}
       #   - name: config-files-volume
       #     configMap:
       #       name: "{{ .Release.Name }}-config-files"
-      #   - name: tmp-volume
-      #     emptyDir: {}
       
       # Must be > preStopSleep
       terminationGracePeriodSeconds: {{ .Values.app.terminationGracePeriodSeconds }}
