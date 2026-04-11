@@ -8,12 +8,18 @@ metadata:
     app.kubernetes.io/version: {{ .Values.app.image.tag | quote }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
+  # 3. Fail-safe: Prevent the user from defining both values, which breaks the K8s API
+  {{- if and .Values.podDisruptionBudget.minAvailable .Values.podDisruptionBudget.maxUnavailable }}
+    {{- fail "You cannot define both podDisruptionBudget.minAvailable and podDisruptionBudget.maxUnavailable. Please choose one." }}
+  {{- end }}
+
+  # 4. Use if/else to render the chosen strategy safely
   {{- if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
-  {{- end }}
-  {{- if .Values.podDisruptionBudget.maxUnavailable }}
+  {{- else if .Values.podDisruptionBudget.maxUnavailable }}
   maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
   {{- end }}
+  
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ .Release.Name }}
